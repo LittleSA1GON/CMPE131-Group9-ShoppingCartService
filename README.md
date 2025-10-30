@@ -1,1 +1,1 @@
-# CMPE131-Group9-UniCartProject
+# CMPE131-Group9-ShoppingCartService
