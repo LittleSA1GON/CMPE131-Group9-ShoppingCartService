@@ -1,0 +1,179 @@
+openapi: 3.0.0
+
+info:
+  title: UniCart - Shopping Cart Service API
+  version: 1.0.0
+  description: >
+    Manages the shopping cart for a user: add, update, remove items and view / clear the cart.
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+
+paths:
+  /api/cart:
+    get:
+      summary: Get the current user's cart
+      description: Returns the current cart for the user, including all items.
+      tags:
+        - Cart
+      responses:
+        '200':
+          description: Cart contents returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+    delete:
+      summary: Clear the entire cart
+      description: Removes all items from the current user's cart.
+      tags:
+        - Cart
+      responses:
+        '204':
+          description: Cart cleared successfully (no content)
+
+  /api/cart/items:
+    post:
+      summary: Add an item to the cart
+      description: >
+        Adds a product and quantity to the user's cart. If the cart does not exist,
+        it is created. If the product already exists in the cart, its quantity is increased.
+      tags:
+        - Cart Items
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - productId
+                - quantity
+              properties:
+                productId:
+                  type: integer
+                  example: 10
+                quantity:
+                  type: integer
+                  minimum: 1
+                  example: 2
+      responses:
+        '200':
+          description: Updated cart contents after adding the item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '400':
+          description: Invalid productId or quantity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/cart/items/{productId}:
+    put:
+      summary: Update the quantity of an item in the cart
+      description: >
+        Changes the quantity of a specific product in the cart.
+        If the new quantity is 0 or negative, the item is removed from the cart.
+      tags:
+        - Cart Items
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          description: ID of the product to update in the cart.
+          schema:
+            type: integer
+            example: 10
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - quantity
+              properties:
+                quantity:
+                  type: integer
+                  example: 5
+      responses:
+        '200':
+          description: Updated cart contents after changing quantity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '400':
+          description: Invalid productId or quantity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Item or cart not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Remove an item from the cart
+      description: Completely removes a specific product from the cart.
+      tags:
+        - Cart Items
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          description: ID of the product to remove from the cart.
+          schema:
+            type: integer
+            example: 10
+      responses:
+        '200':
+          description: Updated cart contents after removing the item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '404':
+          description: Item or cart not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    CartItem:
+      type: object
+      properties:
+        product_id:
+          type: integer
+          example: 10
+        quantity:
+          type: integer
+          example: 2
+
+    Cart:
+      type: object
+      properties:
+        cartId:
+          type: integer
+          nullable: true
+          example: 1
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Something went wrong

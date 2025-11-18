@@ -1,0 +1,8 @@
+node_modules/
+npm-debug.log
+.DS_Store
+
+shopping-cart.db
+
+//we do not have .env yet but I'm adding this for the future implementations
+.env
