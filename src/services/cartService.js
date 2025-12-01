@@ -1,7 +1,10 @@
 // src/services/cartService.js
 
 // Importing the repository layer
+
+
 const cartRepo = require('../repositories/cartRepository');
+const { verifyProductExists } = require('./ProductCatalogClient');
 
 /**
  * Helper for internal use:
@@ -33,6 +36,8 @@ async function addItemToCart(userId, productId, quantity) {
     error.status = 400;
     throw error;
   }
+
+  await verifyProductExists(pid);
 
   const cart = await getOrCreateCartForUser(userId);
 
