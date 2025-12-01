@@ -1,8 +1,5 @@
 // src/services/cartService.js
 
-// Importing the repository layer
-
-
 const cartRepo = require('../repositories/cartRepository');
 const { verifyProductExists } = require('./ProductCatalogClient');
 
@@ -37,10 +34,10 @@ async function addItemToCart(userId, productId, quantity) {
     throw error;
   }
 
+  // C-03.1: verify product with Product Catalog Service
   await verifyProductExists(pid);
 
   const cart = await getOrCreateCartForUser(userId);
-
   const existingItem = await cartRepo.findItem(cart.cart_id, pid);
 
   if (existingItem) {
@@ -69,15 +66,16 @@ async function updateItemQuantityInCart(userId, productId, newQuantity) {
   const pid = Number(productId);
   const qty = Number(newQuantity);
 
-  if (!pid || isNaN(qty)) {
-    const error = new Error('Invalid productId or quantity');
+  if (!pid) {
+    const error = new Error('Invalid productId');
     error.status = 400;
     throw error;
   }
 
   const cart = await cartRepo.findCartByUserId(userId);
+
   if (!cart) {
-    const error = new Error('Cart not found');
+    const error = new Error('Cart not found for user');
     error.status = 404;
     throw error;
   }
@@ -118,14 +116,14 @@ async function removeItemFromCart(userId, productId) {
   }
 
   const cart = await cartRepo.findCartByUserId(userId);
+
   if (!cart) {
-    const error = new Error('Cart not found');
+    const error = new Error('Cart not found for user');
     error.status = 404;
     throw error;
   }
 
   await cartRepo.deleteItem(cart.cart_id, pid);
-
   const items = await cartRepo.getItemsForCart(cart.cart_id);
 
   return {
@@ -135,13 +133,13 @@ async function removeItemFromCart(userId, productId) {
 }
 
 /**
- * C-02.1: Viewing the cart
- * - Returns empty array if no cart exists
+ * C-02.1: Get the current user's cart
  */
 async function getCartForUser(userId) {
   const cart = await cartRepo.findCartByUserId(userId);
 
   if (!cart) {
+    // If there's no cart yet, return an empty one
     return {
       cartId: null,
       items: []
@@ -163,14 +161,13 @@ async function clearCartForUser(userId) {
   const cart = await cartRepo.findCartByUserId(userId);
 
   if (!cart) {
-    // Silently finish if cart doesn't exist anyway
+    // Silently finish if cart doesn't exist
     return;
   }
 
-  await cartRepo.deleteAllItemsForCart(cart.cart_id);
+  await cartRepo.clearCartItems(cart.cart_id);
 }
 
-// Exporting the service functions
 module.exports = {
   addItemToCart,
   updateItemQuantityInCart,

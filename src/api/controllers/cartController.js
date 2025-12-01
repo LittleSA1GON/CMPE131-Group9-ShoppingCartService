@@ -1,12 +1,11 @@
 // src/api/controllers/cartController.js
 
 const cartService = require('../../services/cartService');
-// Note: We are using a fixed userId 1 for now.
-// In the future, when we add JWT middleware, we will change this to req.user.id.
+// Note: userId now comes from JWT via authMiddleware.
 
 async function addItem(req, res) {
   try {
-    const userId = 1; // TODO: Get from JWT
+    const userId = req.user.id;
     const { productId, quantity } = req.body;
 
     const cart = await cartService.addItemToCart(userId, productId, quantity);
@@ -20,7 +19,7 @@ async function addItem(req, res) {
 
 async function updateItem(req, res) {
   try {
-    const userId = 1;
+    const userId = req.user.id;
     const productId = req.params.productId;
     const { quantity } = req.body;
 
@@ -39,7 +38,7 @@ async function updateItem(req, res) {
 
 async function removeItem(req, res) {
   try {
-    const userId = 1;
+    const userId = req.user.id;
     const productId = req.params.productId;
 
     const cart = await cartService.removeItemFromCart(userId, productId);
@@ -53,11 +52,11 @@ async function removeItem(req, res) {
 
 async function getCart(req, res) {
   try {
-    const userId = 1;
+    const userId = req.user.id;
 
     const cart = await cartService.getCartForUser(userId);
 
-    // Since the acceptance criteria says "list items", we could have returned just items as well
+    // You currently return the whole cart object: { cartId, items }
     res.status(200).json(cart);
   } catch (err) {
     console.error(err);
@@ -67,7 +66,7 @@ async function getCart(req, res) {
 
 async function clearCart(req, res) {
   try {
-    const userId = 1;
+    const userId = req.user.id;
 
     await cartService.clearCartForUser(userId);
 
