@@ -18,7 +18,8 @@ async function setupDatabase() {
     CREATE TABLE IF NOT EXISTS carts (
       cart_id    INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id    INTEGER NOT NULL,
-      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      added_at   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
   `);
 
