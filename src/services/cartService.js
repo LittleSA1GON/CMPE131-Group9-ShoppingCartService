@@ -165,7 +165,7 @@ async function clearCartForUser(userId) {
     return;
   }
 
-  await cartRepo.clearCartItems(cart.cart_id);
+  await cartRepo.deleteAllItemsForCart(cart.cart_id);
 }
 
 module.exports = {
