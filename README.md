@@ -45,8 +45,7 @@ Main capabilities:
 ├── Dockerfile
 ├── .dockerignore
 ├── .gitignore
-├── docs/
-│   └── ShoppingCartStatus.md            # Internal status/architecture notes
+status/architecture notes
 ├── src/
 │   ├── app.js                           # Express app wiring
 │   ├── server.js                        # Starts HTTP server
