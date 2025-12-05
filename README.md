@@ -1,246 +1,196 @@
-Shopping Cart Service — CMPE 131 Group 9
 
-A lightweight, test-driven Shopping Cart microservice built with Node.js, Express, and SQLite.
-This service exposes RESTful endpoints for managing user-specific shopping carts, protected by JWT authentication.
+# Group 9 – Shopping Cart Service (UniCart)
 
-Features
+## 1. Overview
 
-User-specific shopping carts
+This repository implements **Service 2: Shopping Cart Service** from  
+the class project described in *Handout 2: Individual Team Project Descriptions*.
 
-Add / update / remove cart items
+**Core responsibility:**  
+Manage temporary and persistent shopping carts for users, tracking the items a user
+intends to buy across sessions and devices.
 
-Automatically creates a cart for a new user on first use
+Main capabilities:
 
-Clear all items in a cart (DELETE /api/cart)
+- Add a product and quantity to a user’s cart.
+- Update the quantity of a product in the cart.
+- Remove a product from the cart.
+- View the contents of the cart.
+- Clear the entire cart.
+- Persist the cart in a SQLite database keyed by `user_id`.
+- Require a valid JWT for all cart operations.
+- Verify products via a Product Catalog Service.
 
-SQLite persistence with auto-initialized tables
+---
 
-JWT authentication middleware
+## 2. Tech Stack
 
-Jest + Supertest integration tests
+- Node.js + Express
+- SQLite (file-based DB)
+- JWT (JSON Web Tokens) for auth
+- axios (HTTP client for Product Catalog calls)
+- Jest + supertest (testing)
 
-Clean layering:
+---
 
-Controller → Service → Repository → Database
+## 3. Project Structure
 
-Tech Stack
+```text
+.
+├── README.md
+├── Group9-ShoppingCartService.yaml      # OpenAPI spec for this service
+├── catalog.js                           # Mock Product Catalog Service (local only)
+├── package.json
+├── package-lock.json
+├── Dockerfile
+├── .dockerignore
+├── .gitignore
+├── docs/
+│   └── ShoppingCartStatus.md            # Internal status/architecture notes
+├── src/
+│   ├── app.js                           # Express app wiring
+│   ├── server.js                        # Starts HTTP server
+│   ├── api/
+│   │   ├── controllers/
+│   │   │   └── cartController.js        # HTTP controllers for cart endpoints
+│   │   └── routes/
+│   │       └── cartRoutes.js            # Routes for /api/cart...
+│   ├── services/
+│   │   ├── cartService.js               # Business logic for cart operations
+│   │   └── ProductCatalogClient.js      # Client for Product Catalog Service
+│   ├── repositories/
+│   │   └── cartRepository.js            # All DB operations (SQL)
+│   ├── database/
+│   │   └── database.js                  # SQLite connection & table creation
+│   └── middleware/
+│       └── authMiddleware.js            # JWT auth, sets req.user.id
+└── tests/
+    └── app.test.js                      # Jest + supertest tests
 
-Runtime: Node.js
+Note: The SQLite DB file shopping-cart.db is created at runtime by
+src/database/database.js and is not committed to version control.
 
-Framework: Express
+⸻
 
-Database: SQLite
+4. Running the Service Locally
 
-Testing: Jest, Supertest
+4.1 Install dependencies
 
-Project Structure
-src/
- ├── api/
- │    └── controllers/
- │         └── cartController.js      # Express route handlers for cart endpoints
- │
- ├── middleware/
- │    └── authMiddleware.js           # JWT verification middleware
- │
- ├── services/
- │    └── cartService.js              # Business logic for cart operations
- │
- ├── repositories/
- │    └── cartRepository.js           # Direct DB access methods (CRUD for carts & items)
- │
- ├── database/
- │    └── database.js                 # SQLite database initialization and setup
- │
- └── app.js                           # Express app wiring routes, middleware, and DB
-tests/
- └── app.test.js                      # Integration tests for API and middleware
-
-Getting Started
-Prerequisites
-
-Node.js (LTS recommended)
-
-npm
-
-SQLite (no manual setup needed; tables are created automatically)
-
-Installation
-git clone <your_repo_url>
-cd CMPE131-Group9-ShoppingCartService
 npm install
 
-Running the Server
+4.2 Start the mock Product Catalog (optional but recommended)
+
+In a separate terminal:
+
+node catalog.js
+
+This starts a simple Product Catalog mock on:
+	•	http://localhost:4000
+
+4.3 Start the Shopping Cart Service
+
+In another terminal:
+
 npm start
 
+Expected console output:
 
-By default the server listens on port 3000 (check app.js or your config if changed).
-
-Environment Variables
-
-Create a .env file in the project root (if used in your setup) and define:
-
-JWT_SECRET=your_secret_key_here
-PORT=3000
-
-
-Note: In tests, a convenience/testing token may be used that bypasses real-world auth flows, but the middleware still validates a token format.
-
-API Overview
-
-All protected endpoints expect an Authorization header with a bearer token:
-
-Authorization: Bearer <token>
-
-Health Check
-GET /
-
-Description: Simple health check endpoint.
-
-Response:
-
-{
-  "message": "Shopping Cart Service is running"
-}
-
-Cart Endpoints
-
-All /api/cart endpoints require a valid JWT.
-
-GET /api/cart
-
-Description: Retrieve the authenticated user’s cart.
-If the user has no cart yet, returns an empty cart object or equivalent representation.
-
-Response Example:
-
-{
-  "userId": "123",
-  "items": [
-    {
-      "productId": "abc",
-      "quantity": 2
-    }
-  ]
-}
-
-POST /api/cart/items
-
-Description: Add an item to the cart.
-If the cart doesn’t exist for the user, it is created automatically.
-If the product already exists in the cart, its quantity is incremented.
-
-Request Body:
-
-{
-  "productId": "abc",
-  "quantity": 1
-}
-
-
-Responses:
-
-200 OK – Item added/updated successfully, returns updated cart
-
-400 Bad Request – Invalid productId or quantity (e.g., quantity <= 0)
-
-PUT /api/cart/items/:productId
-
-Description: Update the quantity of an existing cart item.
-
-Request Body:
-
-{
-  "quantity": 3
-}
-
-
-Behavior:
-
-If quantity > 0: updates the item quantity
-
-If quantity === 0: removes the item from the cart
-
-Responses:
-
-200 OK – Cart updated
-
-404 Not Found – Cart or item not found
-
-DELETE /api/cart/items/:productId
-
-Description: Remove a single item from the cart.
-
-Responses:
-
-200 OK – Item removed, returns updated cart
-
-404 Not Found – Cart or item not found
-
-DELETE /api/cart
-
-Description: Remove all items from the authenticated user’s cart.
-
-Responses:
-
-204 No Content – Cart items cleared successfully (even if the cart had no items)
-
-204 No Content – If the user has no cart at all (idempotent behavior)
-
-Database
-
-The service uses SQLite and auto-initializes the required tables on startup:
-
-carts — Stores cart metadata (e.g., cart_id, user_id)
-
-cart_items — Stores items belonging to a cart (e.g., cart_id, product_id, quantity)
-
-Log output like:
-
+Shopping Cart Service is running on port 3000
 SQLite database initialized and tables are ready.
 
+The service listens on:
+	•	http://localhost:3000
 
-indicates the database is ready.
+⸻
 
-Testing
+5. JWT for Local Testing
 
-The project includes integration tests for:
+All /api routes require a valid JWT.
 
-Health check
+For local testing, you can generate a token with the same secret used by the app:
 
-Authentication middleware behavior
+node -e "console.log(require('jsonwebtoken').sign({ userId: 1 }, 'dev-secret-change-me'))"
 
-Cart CRUD operations
+Copy the printed token and use it in requests as:
+	•	Header: Authorization: Bearer <TOKEN>
 
-Edge cases like invalid quantities and non-existent carts/items
+You can also paste this token into Postman’s Authorization → Bearer Token field.
 
-Clearing all items from a cart
+⸻
 
-Run tests with:
+6. Core API Endpoints (Shopping Cart)
+
+All endpoints below require a valid JWT.
+
+Method	Path	Description
+GET	/api/cart	Get current user’s cart
+POST	/api/cart/items	Add an item (product + quantity) to cart
+PUT	/api/cart/items/{productId}	Update quantity of a product in the cart
+DELETE	/api/cart/items/{productId}	Remove a specific product from the cart
+DELETE	/api/cart	Clear the entire cart
+
+Implementation:
+	•	Routes: src/api/routes/cartRoutes.js
+	•	Controllers: src/api/controllers/cartController.js
+	•	Service: src/services/cartService.js
+	•	Repository: src/repositories/cartRepository.js
+
+⸻
+
+7. Example Requests (curl)
+
+Replace <TOKEN> with the JWT you generated.
+
+7.1 Add an item to the cart
+
+curl -X POST http://localhost:3000/api/cart/items \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -d '{"productId": 10, "quantity": 2}'
+
+7.2 View the cart
+
+curl http://localhost:3000/api/cart \
+  -H "Authorization: Bearer <TOKEN>"
+
+7.3 Update item quantity
+
+curl -X PUT http://localhost:3000/api/cart/items/10 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -d '{"quantity": 5}'
+
+7.4 Remove a single item
+
+curl -X DELETE http://localhost:3000/api/cart/items/10 \
+  -H "Authorization: Bearer <TOKEN>"
+
+7.5 Clear the entire cart
+
+curl -X DELETE http://localhost:3000/api/cart \
+  -H "Authorization: Bearer <TOKEN>"
+
+These examples show that the APIs can be tested using curl or Postman, as required.
+
+⸻
+
+8. Automated Tests
+
+Integration tests live in:
+	•	tests/app.test.js
+
+Run them with:
 
 npm test
 
-
-You should see all tests passing, including:
-
-DELETE /api/cart clears all items in the cart
-
-DELETE /api/cart on user with no cart returns 204 and is idempotent
-
-Development Notes
-
-The business logic for clearing a cart calls the repository to delete all items for a given cart.
-
-Ensure cartService.clearCartForUser uses the correct repository function:
-
-await cartRepo.deleteAllItemsForCart(cart.cart_id);
-
-
-This keeps the service behavior aligned with the tests and ensures DELETE /api/cart returns 204.
-
-Contributors
-
-CMPE 131 – Group 9
-Eda Koker
-Ethan Vu
-Jonas Quiballo
-Francisco Gil Skewes
+The test suite checks:
+	•	Health check (GET /)
+	•	Authentication behavior (no token, invalid token, valid token)
+	•	Cart behavior:
+	•	New user → empty cart
+	•	Adding items (cart creation and quantity merge)
+	•	Invalid quantity (0) → 400
+	•	Updating quantity (including 0 → remove)
+	•	Removing single items
+	•	Clearing the cart and idempotent behavior of DELETE /api/cart
+	•	ProductCatalogClient is mocked so tests do not depend on a real external service.
